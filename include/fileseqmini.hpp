@@ -18,7 +18,7 @@ public:
     virtual ~FileSequenceBase() = default;
 
     virtual bool isOk() const = 0;
-    virtual size_t size() const = 0;
+    virtual std::size_t size() const = 0;
 
     const std::string& getOriginalPattern() const { return m_originalPattern; }
 
@@ -29,7 +29,7 @@ protected:
         int32_t end  = 0;
         int32_t step = 1;
         uint8_t pad  = 0;
-        size_t size() const { return isOk() ? ( end - beg ) / step + 1 : 0; }
+        std::size_t size() const { return isOk() ? ( end - beg ) / step + 1 : 0; }
         bool isOk() const { return ( end - beg ) / step >= 0; }
     };
 
@@ -66,10 +66,10 @@ public:
     explicit FileSequence( const std::string& pattern, const std::string& delimiters = "", char padChar = '0' );
 
     virtual bool isOk() const override { return m_paths.size() > 1; }
-    virtual size_t size() const override { return isOk() ? m_paths.size() : 0; }
+    virtual std::size_t size() const override { return isOk() ? m_paths.size() : 0; }
 
     const StringVector& getFullPaths() const { return m_paths; }
-    const std::string& operator[]( size_t index ) const;
+    const std::string& operator[]( std::size_t index ) const;
 
     iterator begin() const { return m_paths.cbegin(); }
     iterator end() const { return m_paths.cend(); }
@@ -88,7 +88,7 @@ public:
     class iterator
     {
     public:
-        iterator( const FileSequenceLazy& sequence, size_t i )
+        iterator( const FileSequenceLazy& sequence, std::size_t i )
             : m_sequence( sequence )
             , m_pos( i )
         {}
@@ -101,29 +101,29 @@ public:
 
     private:
         const FileSequenceLazy& m_sequence;
-        size_t m_pos;
+        std::size_t m_pos;
     };
 
 public:
     explicit FileSequenceLazy( const std::string& pattern, const std::string& delimiters = "", char padChar = '0' );
 
     virtual bool isOk() const override { return m_isOk; }
-    virtual size_t size() const override { return m_size; }
+    virtual std::size_t size() const override { return m_size; }
 
     StringVector getFullPaths() const;
-    std::string operator[]( size_t index ) const;
+    std::string operator[]( std::size_t index ) const;
 
     iterator begin() const { return iterator( *this, 0 ); }
     iterator end() const { return iterator( *this, m_size ); }
 
 private:
-    std::string unpackSequence( const PackedSequence& seq, size_t branch ) const;
-    size_t sequenceSize( const PackedSequence& seq ) const;
+    std::string unpackSequence( const PackedSequence& seq, std::size_t branch ) const;
+    std::size_t sequenceSize( const PackedSequence& seq ) const;
 
 private:
     PackedPath m_packedPaths;
     StringVector m_pathParts;
-    size_t m_size;
+    std::size_t m_size;
     bool m_isOk;
 };
 
@@ -136,7 +136,7 @@ FileSequence::FileSequence( const std::string& pattern, const std::string& delim
 
     std::vector<StringVector> pathParts;
     pathParts.reserve( parsedPatterns.size() );
-    for ( size_t i = 0; i < parsedPatterns.size(); ++i )
+    for ( std::size_t i = 0; i < parsedPatterns.size(); ++i )
     {
         const PackedSequence& currentPattern = parsedPatterns[i];
         if ( currentPattern.empty() )
@@ -155,7 +155,7 @@ FileSequence::FileSequence( const std::string& pattern, const std::string& delim
 inline
 void FileSequence::generatePaths( const std::vector<StringVector>& pathParts )
 {
-    size_t totalPaths = 1;
+    std::size_t totalPaths = 1;
     for ( const auto& part : pathParts )
     {
         totalPaths *= part.size();
@@ -163,14 +163,14 @@ void FileSequence::generatePaths( const std::vector<StringVector>& pathParts )
 
     m_paths.resize( totalPaths );
 
-    for ( size_t i = 0; i < totalPaths; ++i )
+    for ( std::size_t i = 0; i < totalPaths; ++i )
     {
-        size_t branchId = i;
-        size_t branchesLeft = totalPaths;
+        std::size_t branchId = i;
+        std::size_t branchesLeft = totalPaths;
 
         for ( const auto& part : pathParts )
         {
-            const size_t partId = ( branchId % branchesLeft ) / ( branchesLeft / part.size() );
+            const std::size_t partId = ( branchId % branchesLeft ) / ( branchesLeft / part.size() );
             m_paths[i].append( part[partId] );
             branchId = branchId % branchesLeft;
             branchesLeft = branchesLeft / part.size();
@@ -179,7 +179,7 @@ void FileSequence::generatePaths( const std::vector<StringVector>& pathParts )
 }
 
 inline
-const std::string& FileSequence::operator[]( size_t index ) const
+const std::string& FileSequence::operator[]( std::size_t index ) const
 {
     if ( index < m_paths.size() )
     {
@@ -197,8 +197,8 @@ FileSequenceLazy::FileSequenceLazy( const std::string& pattern, const std::strin
     m_pathParts = splitOriginalPattern();
     m_packedPaths = parsePatterns( m_pathParts );
 
-    size_t pathCount = 1;
-    for ( size_t i = 0; i < m_packedPaths.size(); ++i )
+    std::size_t pathCount = 1;
+    for ( std::size_t i = 0; i < m_packedPaths.size(); ++i )
     {
         if ( !m_packedPaths[i].empty() )
         {
@@ -217,7 +217,7 @@ StringVector FileSequenceLazy::getFullPaths() const
 {
     StringVector result;
     result.reserve( m_size );
-    for ( size_t i = 0; i < m_size; ++i )
+    for ( std::size_t i = 0; i < m_size; ++i )
     {
         result.push_back( ( *this )[i] );
     }
@@ -225,13 +225,13 @@ StringVector FileSequenceLazy::getFullPaths() const
 }
 
 inline
-std::string FileSequenceLazy::operator[]( size_t index ) const
+std::string FileSequenceLazy::operator[]( std::size_t index ) const
 {
     std::string result;
-    size_t branchId = index;
-    size_t branchesLeft = m_size;
+    std::size_t branchId = index;
+    std::size_t branchesLeft = m_size;
 
-    for ( size_t i = 0; i < m_pathParts.size(); ++i )
+    for ( std::size_t i = 0; i < m_pathParts.size(); ++i )
     {
         if ( m_packedPaths[i].empty() )
         {
@@ -239,8 +239,8 @@ std::string FileSequenceLazy::operator[]( size_t index ) const
         }
         else
         {
-            const size_t seqSize = sequenceSize( m_packedPaths[i] );
-            const size_t branch = ( branchId % branchesLeft ) / ( branchesLeft / seqSize );
+            const std::size_t seqSize = sequenceSize( m_packedPaths[i] );
+            const std::size_t branch = ( branchId % branchesLeft ) / ( branchesLeft / seqSize );
             result.append( unpackSequence( m_packedPaths[i], branch ) );
             branchId = branchId % branchesLeft;
             branchesLeft = branchesLeft / seqSize;
@@ -251,11 +251,11 @@ std::string FileSequenceLazy::operator[]( size_t index ) const
 }
 
 inline
-std::string FileSequenceLazy::unpackSequence( const PackedSequence& seq, size_t branch ) const
+std::string FileSequenceLazy::unpackSequence( const PackedSequence& seq, std::size_t branch ) const
 {
     for ( const auto& slice : seq )
     {
-        const size_t subBranchSize = slice.size();
+        const std::size_t subBranchSize = slice.size();
 
         if ( subBranchSize > branch )
         {
@@ -272,9 +272,9 @@ std::string FileSequenceLazy::unpackSequence( const PackedSequence& seq, size_t 
 }
 
 inline
-size_t FileSequenceLazy::sequenceSize( const PackedSequence& seq ) const
+std::size_t FileSequenceLazy::sequenceSize( const PackedSequence& seq ) const
 {
-    size_t result = 0;
+    std::size_t result = 0;
 
     for ( const auto& slice : seq )
     {
@@ -301,8 +301,8 @@ StringVector FileSequenceBase::splitOriginalPattern() const
 {
     StringVector result;
 
-    size_t startToken = 0;
-    for ( size_t i = 0; i < m_originalPattern.length(); ++i )
+    std::size_t startToken = 0;
+    for ( std::size_t i = 0; i < m_originalPattern.length(); ++i )
     {
         if ( m_delimiters.find( m_originalPattern[i] ) != std::string::npos )
         {
@@ -329,7 +329,7 @@ FileSequenceBase::PackedPath FileSequenceBase::parsePatterns( const StringVector
 {
     PackedPath result( tokens.size() );
 
-    for ( size_t i = 0; i < tokens.size(); ++i )
+    for ( std::size_t i = 0; i < tokens.size(); ++i )
     {
         if ( checkPatternCharset( tokens[i] ) )
         {
