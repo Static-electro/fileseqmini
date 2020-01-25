@@ -7,6 +7,7 @@ endif()
 project( fileseq-mini )
 
 add_library( ${PROJECT_NAME} INTERFACE )
+target_compile_features( ${PROJECT_NAME} INTERFACE cxx_std_11 )
 target_include_directories( ${PROJECT_NAME} INTERFACE include )
 
 if ( BUILD_FILESEQ_EXECUTABLES )

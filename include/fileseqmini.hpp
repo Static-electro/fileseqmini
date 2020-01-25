@@ -27,7 +27,7 @@ protected:
     {
         int32_t beg  = 0;
         int32_t end  = 0;
-        int32_t step = 0;
+        int32_t step = 1;
         uint8_t pad  = 0;
         size_t size() const { return isOk() ? ( end - beg ) / step + 1 : 0; }
         bool isOk() const { return ( end - beg ) / step >= 0; }
@@ -346,7 +346,7 @@ FileSequenceBase::PackedPath FileSequenceBase::parsePatterns( const StringVector
                     break;
                 }
 
-                sliceSequence.push_back( { 0, 0, 1, 0 } );
+                sliceSequence.emplace_back();
                 SequenceDesc& desc = sliceSequence.back();
 
                 char* patternStr = &buf[0];
