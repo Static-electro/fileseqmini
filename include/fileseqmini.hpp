@@ -96,8 +96,8 @@ public:
         std::string operator*() const { return m_sequence[m_pos]; }
         iterator& operator++() { m_pos++; return *this; }
         iterator operator++( int ) { return iterator( m_sequence, m_pos + 1 ); }
-        bool operator!=( const iterator& other ) const { return m_pos != other.m_pos; }
-        bool operator==( const iterator& other ) const { return m_pos == other.m_pos; }
+        bool operator!=( const iterator& other ) const { return !( *this == other ); }
+        bool operator==( const iterator& other ) const { return &m_sequence == &other.m_sequence && m_pos == other.m_pos; }
 
     private:
         const FileSequenceLazy& m_sequence;
